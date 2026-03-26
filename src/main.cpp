@@ -1,15 +1,17 @@
 #include <Arduino.h>
 #include "servo_control.h"
+#include <esp_now.h>
+#include <WiFi.h>
 
 // p starts pitch
 // after pitch delay, go to READY_TO_SWING
-// if s is pressed in time, servo swings and then waits for result
-// if s is not pressed in time, it still goes to WAITING_FOR_RESULT so the ball 
+// if swing is received in time, servo swings and then waits for result
+// if swing is not received in time, it still goes to WAITING_FOR_RESULT so the ball
 // can naturally fall into the out pocket in WAITING_FOR_RESULT:
-// pocket 1 → points
-// pocket 2 → points
-// out pocket → OUT state, 0 points
-// nothing detected by timeout → ERROR_STATE
+// pocket 1 -> points
+// pocket 2 -> points
+// out pocket -> OUT state, 0 points
+// nothing detected by timeout -> ERROR_STATE
 
 static const int SERVO_PIN   = D6;
 static const int POCKET1_PIN = D2;
@@ -29,27 +31,27 @@ enum class GameState {
   ERROR_STATE
 };
 
-
 // receiving the wireless signal
 typedef struct struct_message {
-    int velo;
-    bool swing;
+  int velo;
+  int swing;
 } struct_message;
 
 struct_message myData;
 
-static bool swingSignal;
-static int velo;
+static volatile bool swingSignal = false;   // CHANGED: made volatile and initialized
+static volatile int velo = 0;               // CHANGED: made volatile and initialized
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&myData, incomingData, sizeof(myData));
-  // Serial.print("Velocity: ");
-  // Serial.println(myData.velo);
-  // Serial.print("Swing: ");
-  // Serial.println(myData.swing);
-  // Serial.println();
+  Serial.print("Velocity: ");
+  Serial.println(myData.velo);
+  Serial.print("Swing: ");
+  Serial.println(myData.swing);
+  Serial.println();
+
   velo = myData.velo;
-  swingSignal = myData.swing;
+  swingSignal = (myData.swing != 0);        // CHANGED: explicitly convert to bool
 }
 
 static GameState state = GameState::IDLE;
@@ -105,7 +107,7 @@ void enterState(GameState newState) {
     readySwingStartTime = millis();
     Serial.println("BALL HAS BEEN PITCHED");
     Serial.println("State: READY_TO_SWING");
-    Serial.println("Press s to swing");
+    Serial.println("Waiting for wireless swing...");
   }
   else if (state == GameState::WAITING_FOR_RESULT) {
     resultStartTime = millis();
@@ -122,7 +124,7 @@ void enterState(GameState newState) {
     Serial.println("Ball fell into out pocket. 0 points.");
 
     if (swingOccurred) {
-      servoMoveTo(0.0f, 5.0f);
+      servoMoveTo(0.0f, 25.0f);             // CHANGED: faster reset step
       enterState(GameState::RESETTING);
     } else {
       enterState(GameState::IDLE);
@@ -144,11 +146,13 @@ void setup() {
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
+
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
+
   esp_now_register_recv_cb(OnDataRecv);
 
   servoSetup(SERVO_PIN);
@@ -172,7 +176,6 @@ void setup() {
 void loop() {
   // serial commands:
   // p = start pitch
-  // s = swing
   // r = reset score
 
   if (Serial.available() > 0) {
@@ -183,17 +186,20 @@ void loop() {
       Serial.println("Pitch command received");
       enterState(GameState::PITCHING);
     }
-    // else if ((cmd == 's' || cmd == 'S') && state == GameState::READY_TO_SWING) {
-    else if ((swingSignal == true) && state == GameState::READY_TO_SWING) {
-      Serial.println("Swing command received");
-      swingOccurred = true;
-      servoMoveTo(270.0f, 5.0f);
-      enterState(GameState::WAITING_FOR_RESULT);
-    }
     else if (cmd == 'r' || cmd == 'R') {
       totalScore = 0;
       Serial.println("Score reset to 0");
     }
+  }
+
+  // CHANGED: wireless swing check moved OUTSIDE serial block
+  // so it can trigger even when no serial character is present
+  if (swingSignal && state == GameState::READY_TO_SWING) {
+    Serial.println("Wireless swing received");
+    swingOccurred = true;
+    swingSignal = false;                    // CHANGED: clear latched event immediately
+    servoMoveTo(270.0f, 25.0f);            // CHANGED: faster swing step
+    enterState(GameState::WAITING_FOR_RESULT);
   }
 
   if (state == GameState::PITCHING) {
@@ -221,7 +227,7 @@ void loop() {
       Serial.println(totalScore);
 
       if (swingOccurred) {
-        servoMoveTo(0.0f, 5.0f);
+        servoMoveTo(0.0f, 25.0f);          // CHANGED: faster reset step
         enterState(GameState::RESETTING);
       } else {
         enterState(GameState::IDLE);
@@ -236,7 +242,7 @@ void loop() {
       Serial.println(totalScore);
 
       if (swingOccurred) {
-        servoMoveTo(0.0f, 5.0f);
+        servoMoveTo(0.0f, 25.0f);          // CHANGED: faster reset step
         enterState(GameState::RESETTING);
       } else {
         enterState(GameState::IDLE);
@@ -247,7 +253,7 @@ void loop() {
     }
     else if (millis() - resultStartTime >= RESULT_TIMEOUT_MS) {
       if (swingOccurred) {
-        servoMoveTo(0.0f, 5.0f);
+        servoMoveTo(0.0f, 25.0f);          // CHANGED: faster reset step
       }
       enterState(GameState::ERROR_STATE);
     }
