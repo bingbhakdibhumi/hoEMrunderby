@@ -1,0 +1,46 @@
+board: MKS-DLC32 V2.1
+name: DLC32_X_Min_Test
+
+kinematics:
+  Cartesian:
+
+stepping:
+  engine: I2S_STATIC
+  idle_ms: 0
+  pulse_us: 4
+  dir_delay_us: 1
+  disable_delay_us: 0
+
+# Required for DLC32 stepper sockets (I2S outputs)
+i2so:
+  bck_pin: gpio.16
+  data_pin: gpio.21
+  ws_pin: gpio.17
+
+axes:
+  # Enable/disable line for stepstick sockets. Try without :low first.
+  shared_stepper_disable_pin: I2SO.0
+
+  x:
+    # keep your value for now; we'll calibrate later
+    steps_per_mm: 157.750
+
+    # gentle so it won't stall while you're debugging
+    max_rate_mm_per_min: 1000.000
+    acceleration_mm_per_sec2: 50.000
+
+    # doesn't matter much with soft limits off
+    max_travel_mm: 400.000
+    soft_limits: false
+
+    # NO homing / NO limits for first test
+    homing:
+      cycle: 0
+
+    motor0:
+      limit_neg_pin: NO_PIN
+      hard_limits: false
+      pulloff_mm: 1.000
+      stepstick:
+        step_pin: I2SO.1
+        direction_pin: I2SO.2
