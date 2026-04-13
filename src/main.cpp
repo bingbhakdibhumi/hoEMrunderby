@@ -37,7 +37,7 @@ enum class GameState {
 };
 
 static byte bases = 0;   // 8-bit base state
-static unsigned char baseballScore = 0;
+static unsigned char runs = 0;
 static unsigned char outs = 0;
 static char hit_type[5] = "SDTH";
 
@@ -99,7 +99,7 @@ int countBits(byte x) {
 
 void printScoreboard() {
   Serial.print("Runs: ");
-  Serial.println(baseballScore);
+  Serial.println(runs);
   Serial.print("Outs: ");
   Serial.println(outs);
   Serial.print("Bases: ");
@@ -109,7 +109,7 @@ void printScoreboard() {
 
 void resetScoreboard() {
   bases = 0;
-  baseballScore = 0;
+  runs = 0;
   outs = 0;
 }
 
@@ -194,8 +194,7 @@ void hit(int type) {
   bases += (0b1 << type);
 
   byte overflow = bases & scoreMask;
-  int runs = countBits(overflow);
-  baseballScore += runs;
+  runs += countBits(overflow);
   bases &= 0x7;
 
   Serial.print("Type: ");
@@ -203,7 +202,7 @@ void hit(int type) {
   Serial.print("Runs scored: ");
   Serial.println(runs);
   Serial.print("Total score: ");
-  Serial.println(baseballScore);
+  Serial.println(runs);
   Serial.print("Outs: ");
   Serial.println(outs);
   Serial.print("Bases: ");
