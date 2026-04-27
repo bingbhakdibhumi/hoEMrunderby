@@ -85,26 +85,26 @@ void loop() {
     }
   }
 
-  if (digitalRead(FASTBALL) == LOW) {
+  if (digitalRead(FASTBALL_PIN) == LOW) {
     selected_pitch = pitch_type::FASTBALL;
-    Serial.println("Fastball selected.")
-    while (digitalRead(FASTBALL) == LOW) {
+    Serial.println("Fastball selected.");
+    while (digitalRead(FASTBALL_PIN) == LOW) {
       delay(10); 
     }
   }
 
-  else if (digitalRead(CHANGEUP) == LOW) {
+  else if (digitalRead(CHANGEUP_PIN) == LOW) {
     selected_pitch = pitch_type::CHANGEUP;
-    Serial.println("Changeup selected.")
-    while (digitalRead(CHANGEUP) == LOW) {
+    Serial.println("Changeup selected.");
+    while (digitalRead(CHANGEUP_PIN) == LOW) {
       delay(10); 
     }
   }
 
-  else if (digitalRead(START_STOP) == LOW) {
+  else if (digitalRead(START_STOP_PIN) == LOW) {
     selected_pitch = pitch_type::START_STOP;
-    Serial.println("Start-stop selected.")
-    while (digitalRead(START_STOP) == LOW) {
+    Serial.println("Start-stop selected.");
+    while (digitalRead(START_STOP_PIN) == LOW) {
       delay(10); 
     }
   }
