@@ -408,7 +408,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
 
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to DLC32...")
+  Serial.print("Connecting to DLC32...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
