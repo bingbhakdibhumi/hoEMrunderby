@@ -194,7 +194,7 @@ bool pitch1Pressed()   { return mcp.digitalRead(PITCH_1_BUTTON_PIN) == LOW; }
 bool pitch2Pressed()   { return mcp.digitalRead(PITCH_2_BUTTON_PIN) == LOW; }
 bool pitch3Pressed()   { return mcp.digitalRead(PITCH_3_BUTTON_PIN) == LOW; }
 bool pitch4Pressed()   { return mcp.digitalRead(PITCH_4_BUTTON_PIN) == LOW; }
-bool resetPressed()    { return mcp.digitalRead(RESET_BUTTON_PIN) == LOW; }
+bool resetPressed()    { return digitalRead(RESET_BUTTON_PIN) == LOW; }
 
 void updateBaseLeds() {
   mcp.digitalWrite(FIRST_BASE_LED,  (bases & 0b001) ? HIGH : LOW);
@@ -340,7 +340,7 @@ void enterState(GameState newState) {
 
     switch (selectedPitch) {
       case 1:
-        client.println(pitch_1); 
+        client.println(pitch_1);
         break;
       case 2:
         client.println(pitch_2); 
@@ -471,7 +471,7 @@ void setup() {
   mcp.pinMode(PITCH_2_BUTTON_PIN, INPUT_PULLUP);
   mcp.pinMode(PITCH_3_BUTTON_PIN, INPUT_PULLUP);
   mcp.pinMode(PITCH_4_BUTTON_PIN, INPUT_PULLUP);
-  mcp.pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
 
   prevSingle1Blocked = single1Blocked();
   prevSingle2Blocked = single2Blocked();
