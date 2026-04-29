@@ -377,7 +377,7 @@ void enterState(GameState newState) {
   }
   else if (state == GameState::OUT) {
     Serial.println("State: OUT");
-    Serial.println("Ball fell into out pocket.");
+    Serial.println("Out recorded.");
     outs += 1;
     printScoreboard();
 
@@ -643,7 +643,8 @@ void loop() {
   else if (state == GameState::READY_TO_SWING) {
     if (millis() - readySwingStartTime >= SWING_TIMEOUT_MS) {
       Serial.println("No swing entered in time. Watching for ball result...");
-      enterState(GameState::WAITING_FOR_RESULT);
+      // change this to just be an out for now
+      enterState(GameState::OUT);
     }
   }
   else if (state == GameState::WAITING_FOR_RESULT) {
@@ -689,7 +690,9 @@ void loop() {
         servoMoveTo(90.0f, 25.0f);
         enterState(GameState::RETURN_SERVO);
       } else {
-        enterState(GameState::ERROR_STATE);
+        enterState(GameState::OUT);
+        // bypassing error state 
+        // enterState(GameState::ERROR_STATE);
       }
     }
 
@@ -706,7 +709,10 @@ void loop() {
     if (servoAtTarget()) {
       if (errorAfterServoReturn) {
         errorAfterServoReturn = false;
-        enterState(GameState::ERROR_STATE);
+        // bypassing error state
+        // enterState(GameState::ERROR_STATE);
+        enterState(GameState::OUT);
+        
       } else {
         enterState(GameState::IDLE);
       }
